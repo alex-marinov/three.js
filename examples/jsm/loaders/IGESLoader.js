@@ -490,17 +490,28 @@ IGESLoader.prototype = Object.assign( Object.create( Loader.prototype ), {
 			iges.parseParameter(paramSec);
 			iges.parseTerminate(terminateSec);
 
+			console.log("inside parseIges | All Entities:")
 			console.log(iges.entities);
 
 			var entities = iges.entities
+			//console.log("Entities: ")
 			//console.log(new Set(entities.map((e) => parseInt(e.type)).sort()))
+			
+			var vertices = [];
+			var groupCount = 0;
+			var startVertex = 0;
+			var endVertex = 0;
+
 			var entity
 			for(var i = 0; i < entities.length; i++) {
 			  entity = entities[i]
 			  switch (entity.type) {
 				case '100': drawCArc(entity);break;
 				case '102': drawCCurve(entity);break;
-				case '106': drawPath(entity);break;
+				case '106':
+					startVertex = endVertex;
+					drawPath(entity);
+					break;
 				case '108': drawPlane(entity);break;
 				case '110': drawLine(entity);break;
 				case '116': drawPoint(entity);break;
@@ -516,18 +527,72 @@ IGESLoader.prototype = Object.assign( Object.create( Loader.prototype ), {
 			  }
 			}
 
-			function drawPoint(entity){
+			//100
+			function drawCArc(entity){
+				console.log("inside drawCArc")
+				console.log(entity)
+			}
+
+			//106
+			function drawPath(entity){
+				console.log("inside drawPath")
+				console.log(entity)
+
+				//var entityAttr = entity.attr
+				//console.log("" + entityAttr[""])
+
 				var entityParams = entity.params
-				console.log("entityParams")
-				console.log(entityParams)
-				var entityAttr = entity.attr
-				console.log("entityAttr")
-				console.log(entityAttr)
+				
+
+				//const points = [];
+				//entityParams.length
+				for(var i = 0; i < entityParams[1]; i++){
+					vertices.push( parseFloat( entityParams[2+3*i]), parseFloat(entityParams[3+3*i]), parseFloat(entityParams[4+3*i]) );
+					endVertex++;
+				}
+
+				var start = startVertex;
+				var count = endVertex - startVertex;
+
+				geometry.addGroup(start, count, groupCount);
+				console.log("start:" + start + " count:" + count + " groupCount:" + groupCount);
+				groupCount ++;
+
+				//geometry.setFromPoints(points);
+			}
+
+			//110
+			function drawLine(entity){
+				console.log("inside drawLine")
+				console.log(entity)
 			  
-				console.log("Point Name: " + entityAttr["entityName"])
-				console.log("X: " + entityParams[0])
-				console.log("Y: " + entityParams[1])
-				console.log("Z: " + entityParams[2])
+				//get parameters
+				var entityParams = entity.params
+			  
+				const points = [];
+				points.push( new Vector3( entityParams[0], entityParams[1], entityParams[2] ) );
+				points.push( new Vector3( entityParams[3], entityParams[4], entityParams[5] ) );
+				
+				//geometry.addGroup()
+				geometry.setFromPoints(points);
+			}
+
+			//116
+			function drawPoint(entity){
+				console.log("inside drawPoint")
+				console.log(entity)
+
+				var entityParams = entity.params
+				//console.log("entityParams")
+				//console.log(entityParams)
+				var entityAttr = entity.attr
+				//console.log("entityAttr")
+				//console.log(entityAttr)
+			  
+				//console.log("Point Name: " + entityAttr["entityName"])
+				//console.log("X: " + entityParams[0])
+				//console.log("Y: " + entityParams[1])
+				//console.log("Z: " + entityParams[2])
 
 				const points = [];
 				points.push( new Vector3( entityParams[0], entityParams[1], entityParams[2] ) );
@@ -542,60 +607,25 @@ IGESLoader.prototype = Object.assign( Object.create( Loader.prototype ), {
 				geometry.setFromPoints(points);
 			}
 
+			//126
 			function drawRBSplineCurve(entity) {
 				//get attribute details
 				var entityAttr = entity.attr
-				console.log("entityAttr")
-				console.log(entityAttr)
 			  
 				//get parameters
 				var entityParams = entity.params
-				console.log("entityParams")
-				console.log(entityParams)
-				
-				console.log("Line/Spline Name: " + entityAttr["entityName"])
-				console.log("X1: " + entityParams[12])
-				console.log("Y1: " + entityParams[13])
-				console.log("Z1: " + entityParams[14])
-				console.log("X2: " + entityParams[15])
-				console.log("Y2: " + entityParams[16])
-				console.log("Z2: " + entityParams[17])
-			  
-				//const line_material = new THREE.LineBasicMaterial({
-				//  color: 0x00ff00
-				//});
 				
 				const points = [];
 				points.push( new Vector3( entityParams[12], entityParams[13], entityParams[14] ) );
 				points.push( new Vector3( entityParams[15], entityParams[16], entityParams[17] ) );
-				//points.push( new Vector3( 1, 0, 0) );
-				//points.push( new Vector3( 0, 1, 0) );
-				//points.push( new Vector3( -1, 0, 0) );
-				
-				//geometry.vertices.push( new THREE.Vector3( entityParams[12], entityParams[13], entityParams[14] ) );
-				//geometry.vertices.push( new THREE.Vector3( entityParams[15], entityParams[16], entityParams[17] ) );
-				
-				geometry.setFromPoints(points);
-				//geometry.vertices.push( new THREE.Vector3( - 10, 0, 0 ) );
-				//geometry.vertices.push( new THREE.Vector3( 0, 10, 0 ) );
-				//geometry.vertices.push( new THREE.Vector3( 10, 0, 0 ) );
-				
-				//const line_geometry = new THREE.BufferGeometry().setFromPoints( points );
-				//return line_geometry
-				//const line = new THREE.Line( line_geometry, line_material );
-				//scene.add( line );
-			  
-				//const box_geometry = new THREE.BoxGeometry();
-				//const mesh_material = new THREE.MeshBasicMaterial( { color: 0x00ff00 } );
-				//const cube = new THREE.Mesh( box_geometry, mesh_material );
-				//scene.add( cube );
 
-				//geometry.addGroup()
-				//return box_geometry;
-			  
+				geometry.setFromPoints(points);			  
 			  }
 
 			//return iges;
+
+			geometry.setAttribute( 'position', new Float32BufferAttribute( vertices, 3 ) );
+			console.log("geometry object info: " + geometry.groups);
 			return geometry;
 		}
 		

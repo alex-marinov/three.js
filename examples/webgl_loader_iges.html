@@ -55,7 +55,7 @@
 
 				// loading iges with lines
 				const loader = new IGESLoader();
-				loader.load( './models/iges/Ground_Line.igs', function ( geometry ) {
+				loader.load( './models/iges/slot.igs', function ( geometry ) {
 
 					//const material = new THREE.MeshPhongMaterial( { color: 0xff5533, specular: 0x111111, shininess: 200 } );
 					const material = new THREE.LineBasicMaterial( { color: 0x0000ff } );
@@ -63,7 +63,7 @@
 
 					mesh.position.set( 0, -0.2, 0 );
 					mesh.rotation.set( 0, - Math.PI / 2, 0 );
-					mesh.scale.set( 0.0005, 0.0005, 0.0005 );
+					mesh.scale.set( 0.5, 0.5, 0.5 );
 
 					mesh.castShadow = true;
 					mesh.receiveShadow = true;
@@ -92,6 +92,27 @@
 
 				// TODO Loading iges with different attributes / cirles, curves, surfaces etc.
 				//
+
+				// test Section_by_Y0
+				// loading iges with lines
+				loader.load( './models/iges/Section_by_Y0.igs', function ( geometry ) {
+
+					//const material = new THREE.MeshPhongMaterial( { color: 0xff5533, specular: 0x111111, shininess: 200 } );
+					const material = new THREE.LineBasicMaterial( { color: 0x0000ff } );
+					const mesh = new THREE.Line( geometry, material );
+					console.log("inside load, displaying geometry content: " + geometry.groups);
+
+					mesh.position.set( 0, -0.2, 0 );
+					mesh.rotation.set( - Math.PI / 2 , 0, 0 );
+					var scaleFactor = 0.0005;
+					mesh.scale.set( scaleFactor, scaleFactor, scaleFactor );
+
+					mesh.castShadow = true;
+					mesh.receiveShadow = true;
+
+					scene.add( mesh );
+
+				} );
 
 				// Lights
 
@@ -162,7 +183,7 @@
 
 			function render() {
 
-				const timer = Date.now() * 0.0005;
+				const timer = Date.now() * 0.0001;
 
 				camera.position.x = Math.cos( timer ) * 3;
 				camera.position.z = Math.sin( timer ) * 3;
