@@ -6,7 +6,6 @@ import {
 	Group,
 	Line,
 	LineBasicMaterial,
-	LineSegments,
 	Loader,
 	LoaderUtils,
 	Points,
@@ -17,9 +16,18 @@ import {
 /**
  * Description: A THREE loader for IGES files, as created by Solidworks and other CAD programs.
  *
- * TODO: UPDATE DESCRIPTION
+ * IGES Version 6.0 - https://filemonger.com/specs/igs/devdept.com/version6.pdf
+ * More info on IGES see wiki page: https://en.wikipedia.org/wiki/IGES
+ * 
+ * Useage:
+ *  var loader = new IGESLoader();
+ *	loader.load( '/path/to/file.igs', function ( geometry ) {
+ *		scene.add( geometry );
+ *	});
+ * 
+ * 
+ * 
  */
-
 
 var IGESLoader = function ( manager ) {
 
@@ -535,14 +543,14 @@ IGESLoader.prototype = Object.assign( Object.create( Loader.prototype ), {
 
 			//100
 			function drawCArc(entity){
-				console.log("inside drawCArc")
-				console.log(entity)
+				//console.log("inside drawCArc")
+				//console.log(entity)
 			}
 
 			//106
 			function drawPath(entity){
-				console.log("inside drawPath")
-				console.log(entity)
+				//console.log("inside drawPath")
+				//console.log(entity)
 
 				var entityAttr = entity.attr
 				//console.log("" + entityAttr[""])
@@ -571,13 +579,9 @@ IGESLoader.prototype = Object.assign( Object.create( Loader.prototype ), {
 				var material = new LineBasicMaterial( { color: 0x0000ff } );
 				var mesh = new Line( geom, material );
 
-				//mesh.position.set( 0, -0.8, 0 );
-				//mesh.rotation.set( 0, - Math.PI / 2, 0 );
-				//mesh.scale.set( 0.001, 0.001, 0.001 );
-
-				mesh.position.set( 0, -0.2, 0 );
-				mesh.rotation.set( - Math.PI / 2 , 0, 0 );
-				var scaleFactor = 0.0005;
+				mesh.position.set( -15, 0, 0 );
+				mesh.rotation.set( - Math.PI / 2, 0, 0 ); //
+				var scaleFactor = 0.01;
 				mesh.scale.set( scaleFactor, scaleFactor, scaleFactor );
 
 				mesh.castShadow = true;

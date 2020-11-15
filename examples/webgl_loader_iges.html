@@ -15,75 +15,54 @@
 		<script type="module">
 
 			import * as THREE from '../build/three.module.js';
-
 			import Stats from './jsm/libs/stats.module.js';
-
 			import { IGESLoader } from './jsm/loaders/IGESLoader.js';
-
 			import { OrbitControls } from './jsm/controls/OrbitControls.js';
 
-			let container, stats;
-
-			let camera, controls, cameraTarget, scene, renderer;
+			let camera, container, controls, cameraTarget, scene, stats, renderer;
 
 			init();
 			animate();
 
 			function init() {
 				scene = new THREE.Scene();
-				scene.background = new THREE.Color( 0x72645b );
-				scene.fog = new THREE.Fog( 0x72645b, 2, 15 );
+				scene.background = new THREE.Color( 0x999999 );
 
-				// Ground
+				const light = new THREE.DirectionalLight( 0xffffff );
+				light.position.set( 0.5, 1.0, 0.5 ).normalize();
 
-				const plane = new THREE.Mesh(
-					new THREE.PlaneBufferGeometry( 40, 40 ),
-					new THREE.MeshPhongMaterial( { color: 0x999999, specular: 0x101010 } )
-				);
-				plane.rotation.x = - Math.PI / 2;
-				plane.position.y = - 0.5;
-				scene.add( plane );
+				scene.add( light );
 
-				plane.receiveShadow = true;
+				camera = new THREE.PerspectiveCamera( 35, window.innerWidth / window.innerHeight, 1, 500 );
+				camera.position.x = -20;
+				camera.position.y = 20;
+				camera.position.z = 80;
 
-				// renderer
+				scene.add( camera );
+
+				const grid = new THREE.GridHelper( 50, 50, 0xffffff, 0x555555 );
+				scene.add( grid );
 
 				renderer = new THREE.WebGLRenderer( { antialias: true } );
 				renderer.setPixelRatio( window.devicePixelRatio );
 				renderer.setSize( window.innerWidth, window.innerHeight );
-				renderer.outputEncoding = THREE.sRGBEncoding;
-				renderer.shadowMap.enabled = true;
-
-				//container.appendChild( renderer.domElement );
 				document.body.appendChild( renderer.domElement );
 
 				// stats
 				stats = new Stats();
-
 				container = document.createElement( 'div' );
 				container.appendChild( stats.dom );
-
-				document.body.appendChild( container );
-
-				camera = new THREE.PerspectiveCamera( 35, window.innerWidth / window.innerHeight, 1, 15 );
-				camera.position.set( 3, 0.15, 3 );
+				document.body.appendChild( container );		
 
 				// controls
 				controls = new OrbitControls( camera, renderer.domElement );
-
 				//controls.addEventListener( 'change', render ); // call this only in static scenes (i.e., if there is no animation loop)
-
 				controls.enableDamping = true; // an animation loop is required when either damping or auto-rotation are enabled
 				controls.dampingFactor = 0.05;
-
 				controls.screenSpacePanning = false;
-
 				controls.minDistance = 1;
 				controls.maxDistance = 500;
-
 				controls.maxPolarAngle = Math.PI / 2;
-
-				//cameraTarget = new THREE.Vector3( 0, - 0.25, 0 );
 
 				// loading manager
 				var manager = new THREE.LoadingManager();
@@ -94,91 +73,29 @@
 				const loader = new IGESLoader(manager);
 
 				loader.load( './models/iges/slot.igs', function ( geometry ) {
-
 					scene.add( geometry );
-
 				} );
 
 				loader.load( './models/iges/f214x.igs', function ( geometry ) {
-
 					scene.add( geometry );
-
 				} );
 
 				//Section_by_Y0.igs
-				loader.load( './models/iges/Section_by_Y0.igs', function ( geometry ) {
-					
+				loader.load( './models/iges/Section_by_Y0.igs', function ( geometry ) {		
 					scene.add( geometry );
-
 				} );
 
 				//Section_by_Y_Front_Wheel.igs
-				loader.load( './models/iges/Section_by_Y_Front_Wheel.igs', function ( geometry ) {
-					
+				loader.load( './models/iges/Section_by_Y_Front_Wheel.igs', function ( geometry ) {	
 					scene.add( geometry );
-
 				} );
 
 				//Section_by_X0.igs
 				loader.load( './models/iges/Section_by_X0.igs', function ( geometry ) {
-					
 					scene.add( geometry );
-
 				} );
-
-
-				/*
-				// loading iges with points
-				loader.load( './models/iges/f214x.igs', function ( geometry ) {
-
-					//const material = new THREE.MeshPhongMaterial( { color: 0xAAAAAA, specular: 0x111111, shininess: 200 } );
-					const material = new THREE.PointsMaterial( { size: 5, sizeAttenuation: false } );
-					const mesh = new THREE.Points( geometry, material );
-
-					mesh.position.set( 0, -0.2, 0 );
-					mesh.rotation.set( - Math.PI / 2, 0, 0 );
-					mesh.scale.set( 0.5, 0.5, 0.5 );
-
-					mesh.castShadow = true;
-					mesh.receiveShadow = true;
-
-					scene.add( mesh );
-
-				} );
-				*/
-
-				// Lights
-
-				scene.add( new THREE.HemisphereLight( 0x443333, 0x111122 ) );
-
-				addShadowedLight( 1, 1, 1, 0xffffff, 1.35 );
-				addShadowedLight( 0.5, 1, - 1, 0xffaa00, 1 );
-
-
-				//
 
 				window.addEventListener( 'resize', onWindowResize, false );
-			}
-
-			function addShadowedLight( x, y, z, color, intensity ) {
-
-				const directionalLight = new THREE.DirectionalLight( color, intensity );
-				directionalLight.position.set( x, y, z );
-				scene.add( directionalLight );
-
-				directionalLight.castShadow = true;
-
-				const d = 1;
-				directionalLight.shadow.camera.left = - d;
-				directionalLight.shadow.camera.right = d;
-				directionalLight.shadow.camera.top = d;
-				directionalLight.shadow.camera.bottom = - d;
-
-				directionalLight.shadow.camera.near = 1;
-				directionalLight.shadow.camera.far = 4;
-
-				directionalLight.shadow.bias = - 0.002;
-
 			}
 
 			function onWindowResize() {
@@ -203,14 +120,6 @@
 
 			function render() {
 
-				//const timer = Date.now() * 0.001;
-
-				//camera.position.x = Math.cos( timer ) * 3;
-				//camera.position.z = Math.sin( timer ) * 3;
-
-				//camera.lookAt( cameraTarget );
-
-				//controls.update();
 				renderer.render( scene, camera );
 
 			}
