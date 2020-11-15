@@ -3,8 +3,14 @@ import {
 	BufferGeometry,
 	FileLoader,
 	Float32BufferAttribute,
+	Group,
+	Line,
+	LineBasicMaterial,
+	LineSegments,
 	Loader,
 	LoaderUtils,
+	Points,
+	PointsMaterial,
 	Vector3
 } from "../../../build/three.module.js";
 
@@ -31,7 +37,7 @@ IGESLoader.prototype = Object.assign( Object.create( Loader.prototype ), {
 
 		var loader = new FileLoader( this.manager );
 		loader.setPath( this.path );
-		loader.setResponseType();
+		loader.setResponseType('text');
 		//loader.setResponseType( 'arraybuffer' );
 		loader.setRequestHeader( this.requestHeader );
 		loader.setWithCredentials( this.withCredentials );
@@ -345,7 +351,7 @@ IGESLoader.prototype = Object.assign( Object.create( Loader.prototype ), {
 
 		}
 
-		// IGES Perser Start
+		// IGES Parser Start
 
 		var Entity = function(attribute = {entityType:''}, params = []){
 			this.type = attribute.entityType
@@ -448,7 +454,7 @@ IGESLoader.prototype = Object.assign( Object.create( Loader.prototype ), {
 		}
 		
 		function parseIges(data){
-			var geometry = new BufferGeometry();
+			var geometry = new Group(); // []; // new BufferGeometry();
 			//console.log(data);
 
 			var iges = new IGES();
@@ -538,43 +544,51 @@ IGESLoader.prototype = Object.assign( Object.create( Loader.prototype ), {
 				console.log("inside drawPath")
 				console.log(entity)
 
-				//var entityAttr = entity.attr
+				var entityAttr = entity.attr
 				//console.log("" + entityAttr[""])
 
 				var entityParams = entity.params
-				
 
-				//const points = [];
-				//entityParams.length
-				for(var i = 0; i < entityParams[1]; i++){
-					vertices.push( parseFloat( entityParams[2+3*i]), parseFloat(entityParams[3+3*i]), parseFloat(entityParams[4+3*i]) );
-					endVertex++;
+				var geom = new BufferGeometry();
+				var points = [];
+
+				switch (entity.attr["formNumber"].toString()) {
+					case '40':
+						for(var i = 0; i < entityParams[1]; i++){
+							points.push( new Vector3((parseFloat(entityParams[3+2*i])), parseFloat(entityParams[4+2*i]), 0 ));
+						}
+						break;
+					case '12':
+						for(var i = 0; i < entityParams[1]; i++){
+							points.push( new Vector3((parseFloat(entityParams[2+3*i])), parseFloat(entityParams[3+3*i]), parseFloat(entityParams[4+3*i]) ));
+						}
+						break;
+					default: console.log('Uncompliment entity type', entity.attr["formNumber"])
 				}
 
-				var start = startVertex;
-				var count = endVertex - startVertex;
+				geom.setFromPoints(points);
 
-				geometry.addGroup(start, count, groupCount);
-				console.log("start:" + start + " count:" + count + " groupCount:" + groupCount);
-				groupCount ++;
+				var material = new LineBasicMaterial( { color: 0x0000ff } );
+				var mesh = new Line( geom, material );
 
-				//geometry.setFromPoints(points);
+				//mesh.position.set( 0, -0.8, 0 );
+				//mesh.rotation.set( 0, - Math.PI / 2, 0 );
+				//mesh.scale.set( 0.001, 0.001, 0.001 );
+
+				mesh.position.set( 0, -0.2, 0 );
+				mesh.rotation.set( - Math.PI / 2 , 0, 0 );
+				var scaleFactor = 0.0005;
+				mesh.scale.set( scaleFactor, scaleFactor, scaleFactor );
+
+				mesh.castShadow = true;
+				mesh.receiveShadow = true;
+
+				geometry.add(mesh);
 			}
 
 			//110
 			function drawLine(entity){
-				console.log("inside drawLine")
-				console.log(entity)
-			  
-				//get parameters
-				var entityParams = entity.params
-			  
-				const points = [];
-				points.push( new Vector3( entityParams[0], entityParams[1], entityParams[2] ) );
-				points.push( new Vector3( entityParams[3], entityParams[4], entityParams[5] ) );
-				
-				//geometry.addGroup()
-				geometry.setFromPoints(points);
+
 			}
 
 			//116
@@ -583,49 +597,38 @@ IGESLoader.prototype = Object.assign( Object.create( Loader.prototype ), {
 				console.log(entity)
 
 				var entityParams = entity.params
-				//console.log("entityParams")
-				//console.log(entityParams)
 				var entityAttr = entity.attr
-				//console.log("entityAttr")
-				//console.log(entityAttr)
-			  
-				//console.log("Point Name: " + entityAttr["entityName"])
-				//console.log("X: " + entityParams[0])
-				//console.log("Y: " + entityParams[1])
-				//console.log("Z: " + entityParams[2])
+
+				var geom = new BufferGeometry();
 
 				const points = [];
-				points.push( new Vector3( entityParams[0], entityParams[1], entityParams[2] ) );
-				//points.push( new Vector3( entityParams[15], entityParams[16], entityParams[17] ) );
-				//points.push( new Vector3( 0, 0, 0) );
-				//points.push( new Vector3( 0, 1, 0) );
-				//points.push( new Vector3( -1, 0, 0) );
+				points.push( entityParams[0], entityParams[1], entityParams[2] );
 				
-				//geometry.vertices.push( new THREE.Vector3( entityParams[12], entityParams[13], entityParams[14] ) );
-				//geometry.vertices.push( new THREE.Vector3( entityParams[15], entityParams[16], entityParams[17] ) );
+				geom.setFromPoints(points);
+				geom.setAttribute( 'position', new Float32BufferAttribute( points, 3 ) );
+
+				const material = new PointsMaterial( { size: 5, sizeAttenuation: false } );
+				const mesh = new Points( geom, material );
+
+				mesh.position.set( 0, -0.2, 0 );
+				mesh.rotation.set( - Math.PI / 2, 0, 0 );
+				mesh.scale.set( 0.5, 0.5, 0.5 );
+
+				mesh.castShadow = true;
+				mesh.receiveShadow = true;		
 				
-				geometry.setFromPoints(points);
+				geometry.add(mesh);
 			}
 
 			//126
 			function drawRBSplineCurve(entity) {
-				//get attribute details
-				var entityAttr = entity.attr
-			  
-				//get parameters
-				var entityParams = entity.params
-				
-				const points = [];
-				points.push( new Vector3( entityParams[12], entityParams[13], entityParams[14] ) );
-				points.push( new Vector3( entityParams[15], entityParams[16], entityParams[17] ) );
-
-				geometry.setFromPoints(points);			  
-			  }
+		  
+			}
 
 			//return iges;
 
-			geometry.setAttribute( 'position', new Float32BufferAttribute( vertices, 3 ) );
-			console.log("geometry object info: " + geometry.groups);
+			//geometry.setAttribute( 'position', new Float32BufferAttribute( vertices, 3 ) );
+			//console.log("geometry object info: " + geometry);
 			return geometry;
 		}
 		

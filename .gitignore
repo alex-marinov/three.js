@@ -21,3 +21,9 @@ test/unit/build
 
 
 **/node_modules
+examples/models/iges/Section_by_X_in_Driver_H_Point.igs
+examples/models/iges/Section_by_X_in_Rear_Wheel_Center.igs
+examples/models/iges/Section_by_X0.igs
+examples/models/iges/Section_by_Y_Front_Wheel.igs
+examples/models/iges/Section_by_Y0.igs
+examples/models/iges/Section_by_Y0.igs
