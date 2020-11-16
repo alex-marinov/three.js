@@ -522,10 +522,7 @@ IGESLoader.prototype = Object.assign( Object.create( Loader.prototype ), {
 			  switch (entity.type) {
 				case '100': drawCArc(entity);break;
 				case '102': drawCCurve(entity);break;
-				case '106':
-					startVertex = endVertex;
-					drawPath(entity);
-					break;
+				case '106':	drawPath(entity);break;
 				case '108': drawPlane(entity);break;
 				case '110': drawLine(entity);break;
 				case '116': drawPoint(entity);break;
@@ -533,6 +530,7 @@ IGESLoader.prototype = Object.assign( Object.create( Loader.prototype ), {
 				case '122': drawTCylinder(entity);break;
 				case '124': drawTransMatrix(entity);break;
 				case '126': drawRBSplineCurve(entity);break;
+				case '128': drawRBSplineSurface(entity);break;
 				case '142': drawCurveOnPSurface(entity);break;
 				case '144': drawTPSurface(entity);break;
 				case '314': drawColor(entity);break;
@@ -541,37 +539,110 @@ IGESLoader.prototype = Object.assign( Object.create( Loader.prototype ), {
 			  }
 			}
 
-			//100
+			/*
+			*	CIRCULAR ARC ENTITY (TYPE 100)
+			*
+			* 	Parameter Data
+			*
+			*	Index 	Name 	Type 	Description
+			*	1 		ZT 		Real 	Parallel ZT displacement of arc from XT ; YT plane
+			*	2 		X1 		Real 	Arc center abscissa
+			*	3 		Y1 		Real 	Arc center ordinate
+			*	4 		X2 		Real 	Start point abscissa
+			*	5 		Y2 		Real 	Start point ordinate
+			*	6 		X3 		Real 	Terminate point abscissa
+			*	7 		Y3 		Real 	Terminate point ordinate
+			*/
 			function drawCArc(entity){
-				//console.log("inside drawCArc")
-				//console.log(entity)
-			}
-
-			//106
-			function drawPath(entity){
-				//console.log("inside drawPath")
-				//console.log(entity)
+				console.log("inside drawCArc")
+				console.log(entity)
 
 				var entityAttr = entity.attr
 				//console.log("" + entityAttr[""])
 
 				var entityParams = entity.params
+			}
+
+			//102 Composite Curve Entity
+			function drawCCurve(entity){
+				console.log("inside drawCCurve")
+				console.log(entity)
+
+				var entityAttr = entity.attr
+				//console.log("" + entityAttr[""])
+
+				var entityParams = entity.params
+			}
+
+			/*
+			*	COPIOUS DATA ENTITY (TYPE 106, FORMS 1-3)
+			*	LINEAR PATH ENTITY (TYPE 106, FORMS 11-13)
+			*	CENTERLINE ENTITY (TYPE 106, FORMS 20-21)
+			*	SECTION ENTITY (TYPE 106, FORMS 31–38)
+			*	WITNESS LINE ENTITY (TYPE 106, FORM 40)
+			* 	SIMPLE CLOSED PLANAR CURVE ENTITY (TYPE 106, FORM 63)
+			*	
+			*/
+			function drawPath(entity){
+				console.log("inside drawPath")
+				console.log(entity)
+
+				var entityAttr = entity.attr
+				var entityParams = entity.params
 
 				var geom = new BufferGeometry();
 				var points = [];
 
-				switch (entity.attr["formNumber"].toString()) {
-					case '40':
-						for(var i = 0; i < entityParams[1]; i++){
-							points.push( new Vector3((parseFloat(entityParams[3+2*i])), parseFloat(entityParams[4+2*i]), 0 ));
-						}
-						break;
+				switch (entityAttr["formNumber"].toString()) {
+					/*
+					*	LINEAR PATH ENTITY (TYPE 106, FORMS 11-13)
+					*
+					*	Parameter Data
+					*	
+					*	For IP=2 (x,y,z triples), i.e., for Form 12:
+					*	Index 	Name 	Type 	Description
+					*	1		IP		Integer	Interpretation Flag
+					*							1 = x,y pairs, common z
+					*							2 = x,y,z coordinates
+					*							3 = x,y,z coordinates and i,j,k vectors
+					*	2		N		Integer	Number of n-tuples; N >= 2		
+					*	
+					*	For IP=2 (x,y,z triples), i.e., for Form 12:			
+					*	3 		X(1) 	Real 	First data point x value
+					*	4 		Y(1) 	Real 	First data point y value
+					*	5 		Z(1) 	Real 	First data point z value
+					*	.		.		.
+					*	.		.		.
+					*	.		.		.
+					*	2+3*N 	Z(N) 	Real 	Last data point z value
+					*/
 					case '12':
 						for(var i = 0; i < entityParams[1]; i++){
 							points.push( new Vector3((parseFloat(entityParams[2+3*i])), parseFloat(entityParams[3+3*i]), parseFloat(entityParams[4+3*i]) ));
 						}
 						break;
-					default: console.log('Uncompliment entity type', entity.attr["formNumber"])
+					/*
+					*	WITNESS LINE ENTITY (TYPE 106, FORM 40)
+					*
+					*	Parameter Data
+					*
+					*	Index 	Name 	Type 	Description
+					*	1 		IP 		Integer Interpretation Flag: IP = 1
+					*	2 		N 		Integer Number of data points: N ¸ 3 and odd
+					*	3 		ZT 		Real 	Common z displacement
+					*	4 		X(1) 	Real 	First data point abscissa
+					*	5 		Y(1) 	Real 	First data point ordinate
+					*	.		.		.
+					*	.		.		.
+					*	.		.		.
+					*	3+2*N 	Y(N) 	Real 	Last data point ordinate
+					*/
+					case '40':
+						for(var i = 0; i < entityParams[1]; i++){
+							points.push( new Vector3((parseFloat(entityParams[3+2*i])), parseFloat(entityParams[4+2*i]), 0 ));
+						}
+						break;
+					default: console.log('Unsupported Form Number: ', entity.attr["formNumber"])
 				}
 
 				geom.setFromPoints(points);
@@ -624,9 +695,73 @@ IGESLoader.prototype = Object.assign( Object.create( Loader.prototype ), {
 				geometry.add(mesh);
 			}
 
-			//126
+			//124 TRANSFORMATION MATRIX ENTITY
+			/*
+			*	TRANSFORMATION MATRIX ENTITY (TYPE 124)
+			*
+			*	Parameter Data
+			*
+			*	Index 	Name 	Type 	Description
+			*	1 		R11 	Real 	Top Row
+			*	2 		R12 	Real 	.
+			*	3 		R13 	Real 	.
+			*	4 		T1 		Real 	.
+			*	5 		R21 	Real 	Second Row
+			*	6 		R22 	Real 	.
+			*	7 		R23 	Real 	.
+			*	8 		T2 		Real 	.
+			*	9 		R31 	Real 	Third Row
+			*	10 		R32 	Real 	.
+			*	11 		R33 	Real 	.
+			*	12 		T3 		Real 	.
+			*
+			*/
+			function drawTransMatrix(entity){
+				console.log("inside drawTransMatrix")
+				console.log(entity)
+			}
+
+			//126 RATIONAL B-SPLINE CURVE ENTITY
 			function drawRBSplineCurve(entity) {
 		  
+			}
+
+			//128 RATIONAL B-SPLINE SURFACE ENTITY
+			function drawRBSplineSurface(entity) {
+		  
+			}
+
+			//142 CURVE ON A PARAMETRIC SURFACE ENTITY
+			function drawCurveOnPSurface(entity) {
+				console.log("inside drawCurveOnPSurface")
+				console.log(entity)
+			}
+
+			/*
+			*	TRIMMED (PARAMETRIC) SURFACE ENTITY (TYPE 144)	
+			*	Parameter Data
+			*	Index	Name	Type	Description
+			*	1		PTS 	Pointer Pointer to the DE of the surface entity that is to be trimmed
+			*	2		N1 		Integer	0 = the outer boundary is the boundary of D
+			*							1 = otherwise
+			*	3		N2		Integer This number indicates the number of simple closed curves which
+			*							constitute the inner boundary of the trimmed surface. In case
+			*							no inner boundary is introduced, this is set equal to zero.
+			*	4 		PTO 	Pointer Pointer to the DE of the Curve on a Parametric Surface Entity
+			*							that constitutes the outer boundary of the trimmed surface or
+			*							zero
+			*	5 		PTI(1) 	Pointer Pointer to the DE of the first simple closed inner boundary
+			*							curve entity (Curve on a Parametric Surface Entity) according
+			*							to some arbitrary ordering of these entities
+			*	.		.		.
+			*	.		.		.
+			*	.		.		.
+			*	4+N2 	PTI(N2) Pointer Pointer to the DE of the last simple closed inner boundary curve
+			*							entity (Curve on a Parametric Surface Entity)
+			*/
+			function drawTPSurface(entity) {
+				console.log("inside drawTPSurface")
+				console.log(entity)
 			}
 
 			//return iges;
