@@ -72,34 +72,12 @@
 
 				const loader = new IGESLoader(manager);
 
-				loader.load( './models/iges/bracket.igs', function ( geometry ) {
-					scene.add( geometry );
-				} );
+				loader.load( './models/iges/ex1.igs', function ( geometry ) { scene.add( geometry ); } );
+				loader.load( './models/iges/ex2.igs', function ( geometry ) { scene.add( geometry ); } );
+				//loader.load( './models/iges/ex3.igs', function ( geometry ) { scene.add( geometry ); } );
+				loader.load( './models/iges/slot.igs', function ( geometry ) { scene.add( geometry ); } );
+				loader.load( './models/iges/f214x.igs', function ( geometry ) { scene.add( geometry ); } );
 
-				/*
-				loader.load( './models/iges/slot.igs', function ( geometry ) {
-					scene.add( geometry );
-				} );
-
-				loader.load( './models/iges/f214x.igs', function ( geometry ) {
-					scene.add( geometry );
-				} );
-
-				//Section_by_Y0.igs
-				loader.load( './models/iges/Section_by_Y0.igs', function ( geometry ) {		
-					scene.add( geometry );
-				} );
-
-				//Section_by_Y_Front_Wheel.igs
-				loader.load( './models/iges/Section_by_Y_Front_Wheel.igs', function ( geometry ) {	
-					scene.add( geometry );
-				} );
-
-				//Section_by_X0.igs
-				loader.load( './models/iges/Section_by_X0.igs', function ( geometry ) {
-					scene.add( geometry );
-				} );
-*/
 				window.addEventListener( 'resize', onWindowResize, false );
 			}
 
