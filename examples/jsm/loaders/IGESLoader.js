@@ -1,6 +1,7 @@
 import {
 	BufferAttribute,
 	BufferGeometry,
+	EllipseCurve,
 	FileLoader,
 	Float32BufferAttribute,
 	Group,
@@ -10,6 +11,7 @@ import {
 	LoaderUtils,
 	Points,
 	PointsMaterial,
+	Vector2,
 	Vector3
 } from "../../../build/three.module.js";
 
@@ -63,8 +65,6 @@ IGESLoader.prototype = Object.assign( Object.create( Loader.prototype ), {
 	},
 
 	parse: function ( data ) {
-
-		// IGES Parser Start
 
 		var Entity = function(attribute = {entityType:''}, params = []){
 			this.type = attribute.entityType
@@ -239,6 +239,9 @@ IGESLoader.prototype = Object.assign( Object.create( Loader.prototype ), {
 				case '128': drawRBSplineSurface(entity);break;
 				case '142': drawCurveOnPSurface(entity);break;
 				case '144': drawTPSurface(entity);break;
+				case '212': drawGeneralNote(entity);break;
+				case '214':	drawLeaderArrow(entity);break;
+				case '216': drawLinearDimension(entity);break;
 				case '314': drawColor(entity);break;
 				case '402': drawAInstance(entity);break;
 				case '406': propertyEntity(entity);break;
@@ -274,8 +277,45 @@ IGESLoader.prototype = Object.assign( Object.create( Loader.prototype ), {
 				console.log("transMatrix: " + entityAttr["transMatrix"])
 
 				var entityParams = entity.params
+				console.log("ZT ", entityParams[0], " X1 ", entityParams[1], " Y1 ", entityParams[2], " X2 ", entityParams[3], " Y2 ", entityParams[4], " X3 ", entityParams[5], " Y3 ", entityParams[6], )
 
 				console.log(getBySequence(entities, entityAttr["transMatrix"]));
+
+				const startVector = new Vector2(entityParams[3]-entityParams[1], entityParams[4]-entityParams[2]);
+				const endVector = new Vector2(entityParams[5]-entityParams[1], entityParams[6]-entityParams[2]);
+
+				const startAngle = startVector.angle();
+				const endAngle = endVector.angle();
+
+				console.log("Start Angle: ", startAngle, " End Angle: ", endAngle);
+
+				const curve = new EllipseCurve(
+					entityParams[1],  entityParams[2],            // ax, aY
+					1, 1,           // xRadius, yRadius
+					startAngle,  endAngle,  // aStartAngle, aEndAngle
+					false,            // aClockwise
+					0                 // aRotation
+				);
+				
+				const points = curve.getPoints( 50 );
+
+				var geom = new BufferGeometry();
+
+				geom.setFromPoints(points);
+
+				var material = new LineBasicMaterial( { color: 0x0000ff } );
+				var mesh = new Line( geom, material );
+
+				mesh.position.set( 0, 0, 0 );
+				mesh.rotation.set( - Math.PI / 2, 0, 0 ); //
+				var scaleFactor = 1;
+				mesh.scale.set( scaleFactor, scaleFactor, scaleFactor );
+
+				mesh.castShadow = true;
+				mesh.receiveShadow = true;
+
+				geometry.add(mesh);
+
 			}
 
 			/*
@@ -366,7 +406,7 @@ IGESLoader.prototype = Object.assign( Object.create( Loader.prototype ), {
 					*/
 					case '40':
 						for(var i = 0; i < entityParams[1]; i++){
-							points.push( new Vector3((parseFloat(entityParams[3+2*i])), parseFloat(entityParams[4+2*i]), 0 ));
+							points.push( new Vector3((parseFloat(entityParams[3+2*i])), parseFloat(entityParams[4+2*i]), parseFloat(entityParams[2]) ));
 						}
 						break;
 
@@ -384,9 +424,9 @@ IGESLoader.prototype = Object.assign( Object.create( Loader.prototype ), {
 				var material = new LineBasicMaterial( { color: 0x0000ff } );
 				var mesh = new Line( geom, material );
 
-				mesh.position.set( -15, 0, 0 );
+				mesh.position.set( 0, 0, 0 );
 				mesh.rotation.set( - Math.PI / 2, 0, 0 ); //
-				var scaleFactor = 0.01;
+				var scaleFactor = 1;
 				mesh.scale.set( scaleFactor, scaleFactor, scaleFactor );
 
 				mesh.castShadow = true;
@@ -395,11 +435,34 @@ IGESLoader.prototype = Object.assign( Object.create( Loader.prototype ), {
 				geometry.add(mesh);
 			}
 
+			/*
+			*	PLANE ENTITY (TYPE 108)
+			*
+			*	Unbounded Plane Entity (Type 108, Form 0)
+			*	
+			*	Parameter Data
+			*	
+			*	Index 	Name 	Type 	Description
+			*	1 		A 		Real 	Coefficients of Plane
+			*	2 		B 		Real 	Coefficients of Plane
+			*	3 		C 		Real 	Coefficients of Plane
+			*	4 		D 		Real 	Coefficients of Plane
+			*	5 		PTR 	Pointer Zero
+			*	6 		X 		Real 	XT coordinate of location point for display symbol
+			*	7 		Y 		Real 	YT coordinate of location point for display symbol
+			*	8 		Z 		Real 	ZT coordinate of location point for display symbol
+			*	9 		SIZE 	Real 	Size parameter for display symbol
+			*/
+			function drawPlane(entity){
+				console.log("inside drawPlane")
+				console.log(entity)
+			}
+
 			//LINE ENTITY (TYPE 110, FORM 0)
 			//LINE ENTITY (TYPE 110, FORMS 1-2)
 			function drawLine(entity){
-				//console.log("inside drawLine")
-				//console.log(entity)
+				console.log("inside drawLine")
+				console.log(entity)
 
 				var entityAttr = entity.attr
 				var entityParams = entity.params
@@ -419,12 +482,12 @@ IGESLoader.prototype = Object.assign( Object.create( Loader.prototype ), {
 					*	5 		Y2 		Real
 					*	6 		Z2 		Real
 					*/
-					case '0':
+					case '0' || isNaN(entity.attr["formNumber"]):
 						points.push( new Vector3((parseFloat(entityParams[0])), parseFloat(entityParams[1]), parseFloat(entityParams[2]) ));
 						points.push( new Vector3((parseFloat(entityParams[3])), parseFloat(entityParams[4]), parseFloat(entityParams[5]) ));
 						break;	
 					// TODO - Form 1-2					
-					default: console.log('LINE ENTITY - TYPE 110 - Unsupported Form Number: ', entity.attr["formNumber"])
+					default: console.log('LINE ENTITY - TYPE 110 - Unsupported Form Number: ', entity.attr["formNumber"]);
 				}
 
 				geom.setFromPoints(points);
@@ -432,9 +495,9 @@ IGESLoader.prototype = Object.assign( Object.create( Loader.prototype ), {
 				var material = new LineBasicMaterial( { color: 0x0000ff } );
 				var mesh = new Line( geom, material );
 
-				mesh.position.set( -15, 4, 0 );
+				mesh.position.set( 0, 0, 0 );
 				mesh.rotation.set( - Math.PI / 2, 0, 0 ); //
-				var scaleFactor = 0.01;
+				var scaleFactor = 1;
 				mesh.scale.set( scaleFactor, scaleFactor, scaleFactor );
 
 				mesh.castShadow = true;
@@ -463,9 +526,9 @@ IGESLoader.prototype = Object.assign( Object.create( Loader.prototype ), {
 				const material = new PointsMaterial( { size: 5, sizeAttenuation: false } );
 				const mesh = new Points( geom, material );
 
-				mesh.position.set( 0, -0.2, 0 );
+				mesh.position.set( 0, 0, 0 );
 				mesh.rotation.set( - Math.PI / 2, 0, 0 );
-				mesh.scale.set( 0.5, 0.5, 0.5 );
+				mesh.scale.set( 1, 1, 1 );
 
 				mesh.castShadow = true;
 				mesh.receiveShadow = true;		
@@ -558,6 +621,71 @@ IGESLoader.prototype = Object.assign( Object.create( Loader.prototype ), {
 			*/
 			function drawTPSurface(entity) {
 				console.log("inside drawTPSurface")
+				console.log(entity)
+				// TODO
+			}
+
+			/*
+			*	GENERAL NOTE ENTITY (TYPE 212)
+			*	
+			*	Note: Valid values of the Form Number are 0–8, 100–102, 105.
+			*	Parameter Data
+			*
+			*	Index 		Name 		Type 		Description
+			*	1 			NS 			Integer 	Number of text strings in General Note
+			*	2 			NC(1) 		Integer 	Number of characters in first string (TEXT(1)) or zero. The
+			*										number of characters (NC(n)) shall always be equal to the character
+			*										count of its corresponding text string (TEXT(n))
+			*	3 			WT(1) 		Real 		Box width (value must be ¸ 0.0)
+			*	4 			HT(1) 		Real 		Box height (value must be ¸ 0.0)
+			*	5 			FC(1) 		Integer 	Font code (default = 1)
+			*										or
+			*										Pointer Pointer to the DE of the Text Font Definition Entity if negative
+			*	6 			SL(1) 		Real 		Slant angle of TEXT1 in radians (¼=2 is the value for no slant
+			*										angle and is the default value)
+			*	7 			A(1) 		Real 		Rotation angle in radians for TEXT1
+			*	8 			M(1) 		Integer 	Mirror flag:
+			*											0 = no mirroring
+			*											1 = mirror axis is perpendicular to text base line
+			*											2 = mirror axis is text base line
+			*	9 			VH(1) 		Integer 	Rotate internal text flag:
+			*											0 = text horizontal
+			*											1 = text vertical
+			*	10 			XS(1) 		Real 		First text start point
+			*	11 			YS(1) 		Real
+			*	12 			ZS(1) 		Real 		Z depth from XT, YT plane
+			*	13 			TEXT(1) 	String 		First text string
+			*	14 			NC(2) 		Integer 	Number of characters in second text string
+			*	.			.			.
+			*	.			.			.
+			*	.			.			.
+			*	-10+12*NS 	NC(NS) 		Integer 	Number of characters in last text string
+			*	.			.			.
+			*	.			.			.
+			*	.			.			.
+			*	1+12*NS 	TEXT(NS) 	String 		Last text string
+			*/
+			function drawGeneralNote(entity){
+				console.log("inside drawGeneralNote")
+				console.log(entity)
+				// TODO
+			}
+
+			/*
+			*	LEADER (ARROW) ENTITY (TYPE 214)
+			*
+			*/
+			function drawLeaderArrow(entity){
+				console.log("inside drawLeaderArrow")
+				console.log(entity)
+				// TODO
+			}
+
+			/*
+			*	LINEAR DIMENSION ENTITY (TYPE 216)
+			*/
+			function drawLinearDimension(entity){
+				console.log("inside drawLinearDimension")
 				console.log(entity)
 				// TODO
 			}
