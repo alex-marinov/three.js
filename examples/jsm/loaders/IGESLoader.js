@@ -31,6 +31,10 @@ import {
  * 
  */
 
+const scaleFactor = 1;
+
+let fileURL = "";
+
 var IGESLoader = function ( manager ) {
 
 	Loader.call( this, manager );
@@ -44,7 +48,8 @@ IGESLoader.prototype = Object.assign( Object.create( Loader.prototype ), {
 	load: function ( url, onLoad, onProgress, onError ) {
 
 		var scope = this;
-
+		fileURL = url;
+		
 		var loader = new FileLoader( this.manager );
 		loader.setPath( this.path );
 		loader.setResponseType( 'text' );
@@ -169,9 +174,10 @@ IGESLoader.prototype = Object.assign( Object.create( Loader.prototype ), {
 		
 		function parseIges(data){
 			var geometry = new Group(); // []; // new BufferGeometry();
-			console.log(data);
+			geometry.name = "Group_" + Math.floor(Math.random() * 10000000); 
 
 			var iges = new IGES();
+
 			var lines = data.split('\n').filter(function(item){ return item != '' });
 			var currentSection = '';
 			var startSec = '', globalSec = '', dirSec = '', paramSec = '', terminateSec = '';
@@ -210,8 +216,8 @@ IGESLoader.prototype = Object.assign( Object.create( Loader.prototype ), {
 			iges.parseParameter(paramSec);
 			iges.parseTerminate(terminateSec);
 
-			console.log("inside parseIges | All Entities:")
-			console.log(iges.entities);
+			//console.log("inside parseIges | All Entities:")
+			//console.log(iges.entities);
 
 			var entities = iges.entities
 			//console.log("Entities: ")
@@ -270,16 +276,16 @@ IGESLoader.prototype = Object.assign( Object.create( Loader.prototype ), {
 			*	7 		Y3 		Real 	Terminate point ordinate
 			*/
 			function drawCArc(entity){
-				console.log("inside drawCArc")
-				console.log(entity)
+				//console.log("inside drawCArc")
+				//console.log(entity)
 
 				var entityAttr = entity.attr
-				console.log("transMatrix: " + entityAttr["transMatrix"])
+				//console.log("transMatrix: " + entityAttr["transMatrix"])
 
 				var entityParams = entity.params
-				console.log("ZT ", entityParams[0], " X1 ", entityParams[1], " Y1 ", entityParams[2], " X2 ", entityParams[3], " Y2 ", entityParams[4], " X3 ", entityParams[5], " Y3 ", entityParams[6], )
+				//console.log("ZT ", entityParams[0], " X1 ", entityParams[1], " Y1 ", entityParams[2], " X2 ", entityParams[3], " Y2 ", entityParams[4], " X3 ", entityParams[5], " Y3 ", entityParams[6], )
 
-				console.log(getBySequence(entities, entityAttr["transMatrix"]));
+				//console.log(getBySequence(entities, entityAttr["transMatrix"]));
 
 				const startVector = new Vector2(entityParams[3]-entityParams[1], entityParams[4]-entityParams[2]);
 				const endVector = new Vector2(entityParams[5]-entityParams[1], entityParams[6]-entityParams[2]);
@@ -287,7 +293,7 @@ IGESLoader.prototype = Object.assign( Object.create( Loader.prototype ), {
 				const startAngle = startVector.angle();
 				const endAngle = endVector.angle();
 
-				console.log("Start Angle: ", startAngle, " End Angle: ", endAngle);
+				//console.log("Start Angle: ", startAngle, " End Angle: ", endAngle);
 
 				const curve = new EllipseCurve(
 					entityParams[1],  entityParams[2],            // ax, aY
@@ -308,7 +314,7 @@ IGESLoader.prototype = Object.assign( Object.create( Loader.prototype ), {
 
 				mesh.position.set( 0, 0, 0 );
 				mesh.rotation.set( - Math.PI / 2, 0, 0 ); //
-				var scaleFactor = 1;
+
 				mesh.scale.set( scaleFactor, scaleFactor, scaleFactor );
 
 				mesh.castShadow = true;
@@ -332,8 +338,8 @@ IGESLoader.prototype = Object.assign( Object.create( Loader.prototype ), {
 			*	1+N 	DE(N) 	Pointer Pointer to the DE of the last constituent entity
 			*/
 			function drawCCurve(entity){
-				console.log("inside drawCCurve")
-				console.log(entity)
+				//console.log("inside drawCCurve")
+				//console.log(entity)
 
 				var entityAttr = entity.attr
 				//console.log("" + entityAttr[""])
@@ -351,8 +357,8 @@ IGESLoader.prototype = Object.assign( Object.create( Loader.prototype ), {
 			*	
 			*/
 			function drawPath(entity){
-				console.log("inside drawPath")
-				console.log(entity)
+				//console.log("inside drawPath")
+				//console.log(entity)
 
 				var entityAttr = entity.attr
 				var entityParams = entity.params
@@ -426,7 +432,7 @@ IGESLoader.prototype = Object.assign( Object.create( Loader.prototype ), {
 
 				mesh.position.set( 0, 0, 0 );
 				mesh.rotation.set( - Math.PI / 2, 0, 0 ); //
-				var scaleFactor = 1;
+
 				mesh.scale.set( scaleFactor, scaleFactor, scaleFactor );
 
 				mesh.castShadow = true;
@@ -454,15 +460,15 @@ IGESLoader.prototype = Object.assign( Object.create( Loader.prototype ), {
 			*	9 		SIZE 	Real 	Size parameter for display symbol
 			*/
 			function drawPlane(entity){
-				console.log("inside drawPlane")
-				console.log(entity)
+				//console.log("inside drawPlane")
+				//console.log(entity)
 			}
 
 			//LINE ENTITY (TYPE 110, FORM 0)
 			//LINE ENTITY (TYPE 110, FORMS 1-2)
 			function drawLine(entity){
-				console.log("inside drawLine")
-				console.log(entity)
+				//console.log("inside drawLine")
+				//console.log(entity)
 
 				var entityAttr = entity.attr
 				var entityParams = entity.params
@@ -497,7 +503,7 @@ IGESLoader.prototype = Object.assign( Object.create( Loader.prototype ), {
 
 				mesh.position.set( 0, 0, 0 );
 				mesh.rotation.set( - Math.PI / 2, 0, 0 ); //
-				var scaleFactor = 1;
+
 				mesh.scale.set( scaleFactor, scaleFactor, scaleFactor );
 
 				mesh.castShadow = true;
@@ -509,8 +515,8 @@ IGESLoader.prototype = Object.assign( Object.create( Loader.prototype ), {
 
 			//116
 			function drawPoint(entity){
-				console.log("inside drawPoint")
-				console.log(entity)
+				//console.log("inside drawPoint")
+				//console.log(entity)
 
 				var entityParams = entity.params
 				var entityAttr = entity.attr
@@ -528,7 +534,7 @@ IGESLoader.prototype = Object.assign( Object.create( Loader.prototype ), {
 
 				mesh.position.set( 0, 0, 0 );
 				mesh.rotation.set( - Math.PI / 2, 0, 0 );
-				mesh.scale.set( 1, 1, 1 );
+				mesh.scale.set( scaleFactor, scaleFactor, scaleFactor );
 
 				mesh.castShadow = true;
 				mesh.receiveShadow = true;		
@@ -575,14 +581,86 @@ IGESLoader.prototype = Object.assign( Object.create( Loader.prototype ), {
 					default: console.log('LINE ENTITY - TYPE 110 - Unsupported Form Number: ', entity.attr["formNumber"])
 				}
 
-				console.log("TransMatrix sequenceNumber: ", entityAttr["sequenceNumber"], "formNumber: ", entityAttr["formNumber"])
-				console.log("R11 ", entityParams[0], " R12 ", entityParams[1], " R13 ", entityParams[2], " T1 ", entityParams[3])
-				console.log("R21 ", entityParams[4], " R22 ", entityParams[5], " R23 ", entityParams[6], " T2 ", entityParams[7])
-				console.log("R31 ", entityParams[8], " R32 ", entityParams[9], " R33 ", entityParams[10], " T3 ", entityParams[11])
+				//console.log("TransMatrix sequenceNumber: ", entityAttr["sequenceNumber"], "formNumber: ", entityAttr["formNumber"])
+				//console.log("R11 ", entityParams[0], " R12 ", entityParams[1], " R13 ", entityParams[2], " T1 ", entityParams[3])
+				//console.log("R21 ", entityParams[4], " R22 ", entityParams[5], " R23 ", entityParams[6], " T2 ", entityParams[7])
+				//console.log("R31 ", entityParams[8], " R32 ", entityParams[9], " R33 ", entityParams[10], " T3 ", entityParams[11])
 			}
 
-			//126 RATIONAL B-SPLINE CURVE ENTITY
+			/*
+			*	RATIONAL B-SPLINE CURVE ENTITY (TYPE 126)
+			*
+			*/
 			function drawRBSplineCurve(entity) {
+				console.log("inside drawRBSplineCurve")
+				console.log(entity)
+
+				var entityAttr = entity.attr
+				var entityParams = entity.params
+
+				var geom = new BufferGeometry();
+				var points = [];
+
+				var K = entityParams[0];
+				var M = entityParams[1];
+				var PROP1 = entityParams[2];
+				var PROP2 = entityParams[2];
+				var PROP3 = entityParams[2];
+				var PROP4 = entityParams[2];
+
+				console.log("K: ", K, " M: ", M);
+
+				var N = 1 + K - M;
+				console.log("N: ", N);
+				var A = N + 2*M;
+				console.log("A: ", A);
+
+				switch (entityAttr["formNumber"].toString()) {
+					/*
+					*	Form 	Meaning
+					*	0 		Form of curve is determined from the rational B-spline parameters
+					*	1 		Line
+					*	2 		Circular arc
+					*	3 		Elliptical arc
+					*	4 		Parabolic arc
+					*	5 		Hyperbolic arc
+					*/
+					case '0':
+						console.log("PROP1: ", PROP1, " (0 = nonplanar, 1 = planar)");
+						console.log("PROP2: ", PROP2, " (0 = open curve, 1 = closed curve)");
+						console.log("PROP3: ", PROP3, " (0 = rational, 1 = polynomial)");
+						console.log("PROP4: ", PROP4, " (0 = nonperiodic, 1 = periodic)");
+						for(var i = 0; i < K+1; i++){
+							points.push( new Vector3((parseFloat(entityParams[i*3+8+A+K])), parseFloat(entityParams[i*3+9+A+K]), parseFloat(entityParams[i*3+10+A+K]) ));
+						}
+						break;
+					case '1':
+						//console.log(entityParams[0])
+						for(var i = 0; i < K+1; i++){
+							points.push( new Vector3((parseFloat(entityParams[i*3+8+A+K])), parseFloat(entityParams[i*3+9+A+K]), parseFloat(entityParams[i*3+10+A+K]) ));
+						}
+						//points.push( new Vector3((parseFloat(entityParams[0])), parseFloat(entityParams[1]), parseFloat(entityParams[2]) ));
+						//points.push( new Vector3((parseFloat(entityParams[3])), parseFloat(entityParams[4]), parseFloat(entityParams[5]) ));
+						break;	
+					default: console.log('LINE ENTITY - TYPE 110 - Unsupported Form Number: ', entity.attr["formNumber"])
+				}
+
+				console.log(points);
+
+				geom.setFromPoints(points);
+
+				var material = new LineBasicMaterial( { color: 0x0000ff } );
+				var mesh = new Line( geom, material );
+
+				mesh.position.set( 0, 0, 0 );
+				mesh.rotation.set( - Math.PI / 2, 0, 0 ); //
+
+				mesh.scale.set( scaleFactor, scaleFactor, scaleFactor );
+
+				mesh.castShadow = true;
+				mesh.receiveShadow = true;
+
+				geometry.add(mesh);
 		  
 			}
 
@@ -593,8 +671,8 @@ IGESLoader.prototype = Object.assign( Object.create( Loader.prototype ), {
 
 			//142 CURVE ON A PARAMETRIC SURFACE ENTITY
 			function drawCurveOnPSurface(entity) {
-				console.log("inside drawCurveOnPSurface")
-				console.log(entity)
+				//console.log("inside drawCurveOnPSurface")
+				//console.log(entity)
 			}
 
 			/*
@@ -620,8 +698,8 @@ IGESLoader.prototype = Object.assign( Object.create( Loader.prototype ), {
 			*							entity (Curve on a Parametric Surface Entity)
 			*/
 			function drawTPSurface(entity) {
-				console.log("inside drawTPSurface")
-				console.log(entity)
+				//console.log("inside drawTPSurface")
+				//console.log(entity)
 				// TODO
 			}
 
@@ -666,8 +744,8 @@ IGESLoader.prototype = Object.assign( Object.create( Loader.prototype ), {
 			*	1+12*NS 	TEXT(NS) 	String 		Last text string
 			*/
 			function drawGeneralNote(entity){
-				console.log("inside drawGeneralNote")
-				console.log(entity)
+				//console.log("inside drawGeneralNote")
+				//console.log(entity)
 				// TODO
 			}
 
@@ -676,8 +754,8 @@ IGESLoader.prototype = Object.assign( Object.create( Loader.prototype ), {
 			*
 			*/
 			function drawLeaderArrow(entity){
-				console.log("inside drawLeaderArrow")
-				console.log(entity)
+				//console.log("inside drawLeaderArrow")
+				//console.log(entity)
 				// TODO
 			}
 
@@ -685,8 +763,8 @@ IGESLoader.prototype = Object.assign( Object.create( Loader.prototype ), {
 			*	LINEAR DIMENSION ENTITY (TYPE 216)
 			*/
 			function drawLinearDimension(entity){
-				console.log("inside drawLinearDimension")
-				console.log(entity)
+				//console.log("inside drawLinearDimension")
+				//console.log(entity)
 				// TODO
 			}
 
@@ -705,8 +783,14 @@ IGESLoader.prototype = Object.assign( Object.create( Loader.prototype ), {
 			*							name shall be defaulted.
 			*/
 			function drawColor(entity){
-				console.log("inside drawColor")
-				console.log(entity)
+				//console.log("inside drawColor")
+				//console.log(entity)
+				// TODO
+			}
+
+			function drawAInstance(entity){
+				//console.log("inside drawAInstance")
+				//console.log(entity)
 				// TODO
 			}
 
@@ -725,8 +809,8 @@ IGESLoader.prototype = Object.assign( Object.create( Loader.prototype ), {
 
 			*/
 			function propertyEntity(entity){
-				console.log("inside propertyEntity")
-				console.log(entity)
+				//console.log("inside propertyEntity")
+				//console.log(entity)
 				// TODO
 
 			}
