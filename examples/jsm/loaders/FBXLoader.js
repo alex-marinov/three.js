@@ -41,9 +41,9 @@ import {
 	Vector4,
 	VectorKeyframeTrack,
 	sRGBEncoding
-} from "../../../build/three.module.js";
-import { Inflate } from "../libs/inflate.module.min.js";
-import { NURBSCurve } from "../curves/NURBSCurve.js";
+} from '../../../build/three.module.js';
+import * as fflate from '../libs/fflate.module.min.js';
+import { NURBSCurve } from '../curves/NURBSCurve.js';
 
 /**
  * Loader loads FBX file and generates Group representing FBX scene.
@@ -542,7 +542,7 @@ var FBXLoader = ( function () {
 
 				parameters.color = new Color().fromArray( materialNode.Diffuse.value );
 
-			} else if ( materialNode.DiffuseColor && materialNode.DiffuseColor.type === 'Color' ) {
+			} else if ( materialNode.DiffuseColor && ( materialNode.DiffuseColor.type === 'Color' || materialNode.DiffuseColor.type === 'ColorRGB' ) ) {
 
 				// The blender exporter exports diffuse here instead of in materialNode.Diffuse
 				parameters.color = new Color().fromArray( materialNode.DiffuseColor.value );
@@ -559,7 +559,7 @@ var FBXLoader = ( function () {
 
 				parameters.emissive = new Color().fromArray( materialNode.Emissive.value );
 
-			} else if ( materialNode.EmissiveColor && materialNode.EmissiveColor.type === 'Color' ) {
+			} else if ( materialNode.EmissiveColor && ( materialNode.EmissiveColor.type === 'Color' || materialNode.EmissiveColor.type === 'ColorRGB' ) ) {
 
 				// The blender exporter exports emissive color here instead of in materialNode.Emissive
 				parameters.emissive = new Color().fromArray( materialNode.EmissiveColor.value );
@@ -2837,16 +2837,34 @@ var FBXLoader = ( function () {
 			if ( curves.y !== undefined ) times = times.concat( curves.y.times );
 			if ( curves.z !== undefined ) times = times.concat( curves.z.times );
 
-			// then sort them and remove duplicates
+			// then sort them
 			times = times.sort( function ( a, b ) {
 
 				return a - b;
 
-			} ).filter( function ( elem, index, array ) {
-
-				return array.indexOf( elem ) == index;
-
 			} );
+
+			// and remove duplicates
+			if ( times.length > 1 ) {
+
+				var targetIndex = 1;
+				var lastValue = times[ 0 ];
+				for ( var i = 1; i < times.length; i ++ ) {
+
+					var currentValue = times[ i ];
+					if ( currentValue !== lastValue ) {
+
+						times[ targetIndex ] = currentValue;
+						lastValue = currentValue;
+						targetIndex ++;
+
+					}
+
+				}
+
+				times = times.slice( 0, targetIndex );
+
+			}
 
 			return times;
 
@@ -3592,14 +3610,14 @@ var FBXLoader = ( function () {
 
 					}
 
-					if ( typeof Inflate === 'undefined' ) {
+					if ( typeof fflate === 'undefined' ) {
 
-						console.error( 'THREE.FBXLoader: External library Inflate.min.js required, obtain or import from https://github.com/imaya/zlib.js' );
+						console.error( 'THREE.FBXLoader: External library fflate.min.js required.' );
 
 					}
 
-					var inflate = new Inflate( new Uint8Array( reader.getArrayBuffer( compressedLength ) ) ); // eslint-disable-line no-undef
-					var reader2 = new BinaryReader( inflate.decompress().buffer );
+					var data = fflate.unzlibSync( new Uint8Array( reader.getArrayBuffer( compressedLength ) ) ); // eslint-disable-line no-undef
+					var reader2 = new BinaryReader( data.buffer );
 
 					switch ( type ) {
 

@@ -1,6 +1,12 @@
 import { Matrix4 } from './Matrix4';
 import { Vector3 } from './Vector3';
 
+type Matrix3Tuple = [
+	number, number, number,
+	number, number, number,
+	number, number, number,
+];
+
 /**
  * ( interface Matrix<T> )
  */
@@ -40,7 +46,7 @@ export interface Matrix {
 	/**
 	 * clone():T;
 	 */
-	clone(): this;
+	clone(): Matrix;
 }
 
 /**
@@ -71,7 +77,7 @@ export class Matrix3 implements Matrix {
 		n33: number
 	): Matrix3;
 	identity(): Matrix3;
-	clone(): this;
+	clone(): Matrix3;
 	copy( m: Matrix3 ): this;
 	extractBasis( xAxis: Vector3, yAxis: Vector3, zAxis: Vector3 ): Matrix3;
 	setFromMatrix4( m: Matrix4 ): Matrix3;
@@ -125,6 +131,7 @@ export class Matrix3 implements Matrix {
 	 * @return The created or provided array.
 	 */
 	toArray( array?: number[], offset?: number ): number[];
+	toArray( array?: Matrix3Tuple, offset?: 0 ): Matrix3Tuple;
 
 	/**
 	 * Copies he values of this matrix into the provided array-like.
